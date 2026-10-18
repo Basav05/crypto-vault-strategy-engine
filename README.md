@@ -1,39 +1,27 @@
-# Crypto Vault Strategy Engine
+# RegimeVault — BTC/ETH options strategy research engine (v0.2)
 
-An automated strategy selection engine for BTC and ETH options-based yield vaults.
+Rules-based, explainable **paper-trading** engine built from the "Automatic Strategy Selection Engine" spec:
+data validation → features → regime (with hysteresis) → real-leg candidates → conservative pricing and analytic payoff →
+scoring → sizing → risk veto → simulated fill → position state machine → SQLite audit trail.
 
-## Overview
+**It never sends exchange orders, uses credentials, or moves funds. A paper/testnet result is not evidence of live performance.**
+See `IMPROVEMENTS.md` for known gaps (read priority 1 first).
 
-The Strategy Engine analyzes market data, evaluates candidate options strategies, calculates potential payoff and maximum loss, and selects strategies that satisfy predefined risk and execution constraints.
+## Run (Windows PowerShell)
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m pytest              # or: python run_tests.py   (no pytest needed)
+python -m regimevault.cli --scenario range --cycles 5      # offline demo, synthetic data
+streamlit run app.py                                       # dashboard
+python -m regimevault.cli --source deribit --cycles 1      # public testnet data (needs internet)
+```
+macOS/Linux: same, with `python3 -m venv .venv && source .venv/bin/activate`.
 
-The project is designed to progress from a testable MVP to testnet integration, with a focus on transparent decision-making, defined-risk positions, and automated risk management.
+The regime needs 3 consecutive confirmations (hysteresis), so the first two cycles never trade — by design.
 
-## Core Features
-
-- **Market Analysis:** Evaluate BTC and ETH prices, volatility, liquidity, and options data.
-- **Strategy Selection:** Rank eligible strategies using configurable rules and risk-adjusted scoring.
-- **Payoff Engine:** Calculate maximum profit, maximum loss, breakeven prices, and expiration payoffs.
-- **Risk Management:** Enforce position limits, loss thresholds, liquidity filters, and trade eligibility checks.
-- **Backtesting:** Test strategy behavior against historical or simulated market conditions.
-- **Testnet Execution:** Integrate with supported testnet feeds and trading APIs.
-- **Auditability:** Record market inputs, strategy scores, risk checks, and selection decisions.
-
-## Development Status
-
-Early-stage MVP. Initial development focuses on a single defined-risk options spread, unit tests, and simulated market data before expanding into automated strategy selection and testnet execution.
-
-**Safety:** Testnet and simulation only during initial development. The engine does not guarantee yield or eliminate market, liquidity, execution, or model risk.
-
-## Roadmap
-
-1. Implement option payoff functions and data models.
-2. Build automated unit tests for one defined-risk spread.
-3. Create a market-data interface and simulated feed.
-4. Implement strategy eligibility filters and scoring.
-5. Add backtesting and risk-limit enforcement.
-6. Integrate a supported testnet trading interface.
-7. Add monitoring, logging, and failure-handling mechanisms.
-
-## Disclaimer
-
-This software is experimental and is not financial advice. Live trading requires additional security reviews, independent testing, operational safeguards, and appropriate legal and regulatory assessment.
+## Layout
+`config` (all thresholds) · `models` · `validation` · `features` · `regime` · `generator` · `payoff` · `scoring` · `risk` ·
+`execution` (paper fills only) · `positions` (state machine, exits) · `store` (SQLite) · `engine` (cycle) · `market_data`
+(public Deribit testnet + synthetic) · `cli` · `app.py` (dashboard) · `tests/`.
